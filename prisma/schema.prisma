@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model financial_model {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  startup_id String       @db.Uuid
+  created_at DateTime     @db.Timestamp(6)
+  updated_at DateTime     @db.Timestamp(6)
+  startup    startup      @relation(fields: [startup_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  key_metric key_metric[]
+}
+
+model key_metric {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  financial_model_id String          @db.Uuid
+  name               String          @db.VarChar(255)
+  value              Float
+  financial_model    financial_model @relation(fields: [financial_model_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model resource {
+  id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String @db.VarChar(255)
+  content       String
+  resource_type String @db.VarChar(255)
+}
+
+model startup {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String            @db.VarChar(255)
+  owner_id        String            @db.Uuid
+  financial_model financial_model[]
+  user            user              @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_startup    user_startup[]
+}
+
+model user {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String?        @unique @db.VarChar(255)
+  firstName    String?        @db.VarChar(255)
+  lastName     String?        @db.VarChar(255)
+  roq_user_id  String         @db.VarChar(255)
+  tenant_id    String         @db.VarChar(255)
+  startup      startup[]
+  user_startup user_startup[]
+}
+
+model user_startup {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String  @db.Uuid
+  startup_id String  @db.Uuid
+  startup    startup @relation(fields: [startup_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user       user    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
